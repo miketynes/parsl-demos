@@ -1,0 +1,15 @@
+name: parsl-demos
+channels:
+  - defaults
+  - conda-forge
+dependencies:
+  # Core dependencies
+  - python==3.11
+  - pytest
+  - flake8
+  - pip
+
+# Pip packages for all of them
+  - pip:
+    - parsl
+    - tqdm
