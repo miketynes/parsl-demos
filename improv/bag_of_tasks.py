@@ -3,7 +3,7 @@
 My goal is to provision a (small) set of nodes on the cluster
 and send a set of tasks to them
 """
-
+import time
 from concurrent.futures import as_completed
 
 from tqdm.auto import tqdm
@@ -31,6 +31,7 @@ def random_sleep_task(
     sleep_duration = random.randint(sleep_min, sleep_max)
     time.sleep(sleep_duration)
 
+    # grab the parsl environment variables so we can print them out
     parsl_env = {k: v for k, v in os.environ.items() if  'parsl' in k.lower()}
     parsl_env = '\n'.join([f'{k}: {v}' for k, v in parsl_env.items()])
 
@@ -42,13 +43,13 @@ Parsl env:
 {parsl_env}
 Slept for {sleep_duration}(s).
 """
-    return msg
+    return msg, sleep_duration
 
 if __name__ == "__main__": 
 
-    n_tasks = 10
-    sleep_min = 5
-    sleep_max = 10
+    n_tasks = 20
+    sleep_min = 1
+    sleep_max = 5
 
     config = Config(
         executors=[
@@ -59,14 +60,16 @@ if __name__ == "__main__":
                     queue='debug',
                     nodes_per_block=1,
                     walltime='00:10:00',
-                    init_blocks=1, 
-                    max_blocks=1,
+                    init_blocks=2,
+                    min_blocks=2, 
+                    max_blocks=2,
                     worker_init="""
 source activate parsl-demos
 which python
 """,
                     launcher=SimpleLauncher(),
                 ),
+                max_workers_per_node=1 # number of *parsl* workers
             )
         ],
     )
@@ -81,10 +84,17 @@ which python
             sleep_max=sleep_max,
         )
         futures.append(msg)
+    
+    total_sleep = 0
+    start = time.perf_counter()
     for future in tqdm(as_completed(futures), total=len(futures)):
         if future.exception() is not None:
             print(future.exception())
         
-        msg = future.result()
+        msg, sleep_duration = future.result()
         print(msg)
-    
+        total_sleep += sleep_duration
+    print("Done.")
+    elapsed = time.perf_counter() - start
+    print("Done.")
+    print(f"Total slept time: {total_sleep}s, Wall time: {elapsed:0.2f}s")    
