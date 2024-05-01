@@ -32,7 +32,7 @@ def random_sleep_task(
 
     # dont print hello, let the main thread do that
     # (we dont want to deal with stdout yet)
-    msg = f'Hello from task {task_ix} (slept for {sleep_duration}'
+    msg = f'Hello from task {task_ix} (slept for {sleep_duration})'
     return msg
 
 if __name__ == "__main__": 
